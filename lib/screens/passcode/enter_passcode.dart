@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:voskcoin/components/my_textfield.dart';
 import '../../components/my_text.dart';
@@ -16,30 +16,73 @@ class EnterPasscode extends StatefulWidget {
 }
 
 class _EnterPasscodeState extends State<EnterPasscode> {
-
+  bool _isLoad = false;
   var selectedindex = 0;
+  int _failedAttempts = 0;
   String code = '';
   final user = FirebaseAuth.instance.currentUser!;
 
   Future<void> checkPasscode(String code) async {
-    final userDoc = await FirebaseFirestore.instance
-        .collection('user')
-        .doc(user.email)
-        .get();
+    setState(() {
+      _isLoad = true;
+    });
 
-    final String passcode = userDoc.data()!['passcode'];
+    final connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult != ConnectivityResult.none) {
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('user')
+            .doc(user.email)
+            .get();
 
-    if (code == passcode) {
-      Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute(
-              builder: (BuildContext context) {
-                return  Bottombar(); }));
+        final String passcode = userDoc.data()!['passcode'];
+
+        if (code == passcode) {
+          Future.delayed(Duration(seconds: 3), () {
+            setState(() {
+              _isLoad = false;
+            });
+            Navigator.of(context, rootNavigator: true).push(
+              MaterialPageRoute(builder: (BuildContext context) {
+                return Bottombar();
+              }),
+
+            );
+            _failedAttempts = 0; // reset failed attempts on successful login
+          });
+        } else {
+          _failedAttempts++;
+          if (_failedAttempts >= 3) {
+            admin.auth().updateUser(uid, { disabled: true });
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(AccountDisabled);
+            SignUserOut();
+          } else {
+            Future.delayed(Duration(seconds: 3), () {
+              setState(() {
+                _isLoad = false;
+              });
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(PasscodeWrong);
+            });
+          }
+        }
+      } catch (e) {
+        setState(() {
+          _isLoad = false;
+        });
+        print(e);
+      }
     } else {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(PasscodeWrong);
+      setState(() {
+        _isLoad = false;
+      });
+      print('no internet connection');
     }
   }
+
   void SignUserOut(){
     FirebaseAuth.instance.signOut();
 
@@ -58,7 +101,7 @@ class _EnterPasscodeState extends State<EnterPasscode> {
           height: height * 1,
           width: width,
 
-          child: Column(
+          child:Column(
             children: [
               Expanded(
                 flex: 2,
@@ -125,14 +168,11 @@ class _EnterPasscodeState extends State<EnterPasscode> {
 
 
                 ),
-
               ),
-              SizedBox(height: 10,),
-              Center(
-                child:Image.asset('assets/images/lock.gif', width: 130,
-                  height: 130,
-                  fit: BoxFit.cover,),
-              ),
+              SizedBox(height: 70,),
+Visibility(
+  visible: _isLoad,
+    child: CustomCircularProgressIndicator(size: 20)),
               SizedBox(height: 50,),
               Expanded(
                 flex: 2,
@@ -349,44 +389,34 @@ class _EnterPasscodeState extends State<EnterPasscode> {
                             child: Row(
                               mainAxisSize: MainAxisSize.max,
                               children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: Container(
-                                    color: Colors.transparent,
-                                    height: double.maxFinite,
-                                    child: ElevatedButton(
-                                        onPressed:  () {  if(code.length == 4){
-                                  checkPasscode(code);
-                                  }
-                                    else{
-                                  ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(CompletePasscode);
+                              Expanded(
+                              flex: 1,
+                              child: Container(
+                                  height: double.maxFinite,
 
-                                  }},
-                                            child: Container(
-                                      height: 105,
-                                      width: 100,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        color: Colors.green,
-                                        border: Border.all(color: Colors.transparent),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          "GO",
-                                          style: TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white,
-                                            letterSpacing: 2.4,
+                                  child: TextButton(
+                                      onPressed: () {
+                                        checkPasscode(code);
+
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(left: 20.0,right: 10,bottom: 10),
+                                        child: Center(
+                                          child: Container(
+                                            height: 105,
+                                            width: 100,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(10),
+                                              color: Colors.green,
+                                            ),
+                                            child: Center(child: Text('GO',style:
+                                            TextStyle(fontSize: 22,fontWeight: FontWeight.bold,color: Colors.white,letterSpacing: 2.4),)),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                    ),
-                                  ),
-                                ),
+                                      ))
+                              ),
+                            ),
+
                                 Expanded(
                                   flex: 1,
                                   child: Container(
@@ -416,6 +446,19 @@ class _EnterPasscodeState extends State<EnterPasscode> {
                                             size: 30)),
                                   ),
                                 ),
+                              ],
+                            ),
+                          )),
+                      Expanded(
+                          flex: 1,
+                          child: Container(
+                            color: Colors.transparent,
+                            child: Column(
+                              children: [
+                                SizedBox(height: 20,),
+                                Center(child: Container(
+                                  child:Text('Forgot Pin')
+                                ))
                               ],
                             ),
                           )),

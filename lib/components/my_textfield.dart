@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class MyTextField extends StatelessWidget {
@@ -312,5 +314,67 @@ class _LoadingButtonState extends State<LoadingButton> {
         ),
       ),
     );
+  }
+}
+
+
+
+
+class CustomCircularProgressIndicator extends StatefulWidget {
+  final double size;
+
+  CustomCircularProgressIndicator({
+    required this.size,
+  });
+
+  @override
+  _CustomCircularProgressIndicatorState createState() =>
+      _CustomCircularProgressIndicatorState();
+}
+
+class _CustomCircularProgressIndicatorState
+    extends State<CustomCircularProgressIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Color?> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 4),
+    )..repeat();
+
+    _animation = TweenSequence<Color?>(
+      [
+        TweenSequenceItem(
+          tween: ColorTween(begin: Colors.black, end: Colors.green),
+          weight: 1,
+        ),
+        TweenSequenceItem(
+          tween: ColorTween(begin: Colors.green, end: Colors.black),
+          weight: 1,
+        ),
+      ],
+    ).animate(_controller);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: widget.size,
+      height: widget.size,
+      child: CircularProgressIndicator(
+        valueColor: _animation,
+        strokeWidth: widget.size * 0.08,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

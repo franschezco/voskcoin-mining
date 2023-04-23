@@ -4,11 +4,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:voskcoin/screens/auth/welcome.dart';
 
+import '../../components/my_textfield.dart';
 import '../passcode/enter_passcode.dart';
 import '../passcode/set_passcode.dart';
 
-class PassService extends StatelessWidget {
+class PassService extends StatefulWidget {
   const PassService({Key? key}) : super(key: key);
+
+  @override
+  State<PassService> createState() => _PassServiceState();
+}
+
+class _PassServiceState extends State<PassService> {
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +37,11 @@ class PassService extends StatelessWidget {
               switch (snapshot.connectionState) {
                 case ConnectionState.waiting:
                   return Scaffold(
-                    backgroundColor: Colors.white70,
-                      body: Center(child: CircularProgressIndicator()));
+                    backgroundColor: Colors.transparent,
+                      body: Center(child:CustomCircularProgressIndicator(
+                        size: 30,
+                      )
+                      ));
                 default:
                   if (snapshot.data == null || !snapshot.data!.exists) {
                     print('Document does not exist.');

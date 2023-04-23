@@ -115,11 +115,11 @@ final user = FirebaseAuth.instance.currentUser!;
                         Icon(Icons.account_balance_wallet),
                         SizedBox(width: 10,),
                         Text("\$",style:Styles.headLineStyle.copyWith(fontFamily: 'PlayfairDisplay')),
-                        Text(balance!.toInt().toString() ?? '',style:Styles.headLineStyle.copyWith(fontFamily: 'PlayfairDisplay')),Spacer(),
+                        Text('${balance?.toInt()?.toString() ?? '0'}',style:Styles.headLineStyle.copyWith(fontFamily: 'PlayfairDisplay')),Spacer(),
                         Column(
                             children: [
                               Text("Horsepower",style: TextStyle(fontSize: 16,fontWeight: FontWeight.w600,fontFamily: "PlayfairDisplay")),
-                              Text( horsepower!.toInt().toString() +'GH/Z',style: TextStyle(fontSize: 18,fontWeight: FontWeight.w600,color: Colors.white,fontFamily: "PlayfairDisplay"))
+                              Text( (horsepower ?? 0).toInt().toString() +'GH/Z',style: TextStyle(fontSize: 18,fontWeight: FontWeight.w600,color: Colors.white,fontFamily: "PlayfairDisplay"))
                             ]
                     ),
                   ],

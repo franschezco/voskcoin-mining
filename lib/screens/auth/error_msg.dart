@@ -52,7 +52,9 @@ final CompletePasscode = SnackBar(
     contentType: ContentType.failure,
   ),
 );
-
+final AccountDisabled = SnackBar(
+  content: Text('Your account has been disabled. Please contact support.'),
+);
 final PasscodeUnmatch = SnackBar(
   /// need to set following properties for best effect of awesome_snackbar_content
   elevation: 0,
